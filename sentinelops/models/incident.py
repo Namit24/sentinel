@@ -26,5 +26,6 @@ class Incident(Base):
     confidence_score: Mapped[float] = mapped_column(Float, nullable=False)
     fallback_used: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     root_cause_data: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    runbook_data: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     top_cause_service: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     embedding: Mapped[list[float] | None] = mapped_column(Vector(384), nullable=True)

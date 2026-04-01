@@ -4,8 +4,10 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from sentinelops.schemas.alert import AlertCreate
+from sentinelops.schemas.approval import ApprovalRequestRead
 from sentinelops.schemas.log_entry import RawLogEntryCreate
 from sentinelops.schemas.root_cause import RootCauseReport
+from sentinelops.schemas.runbook import RunbookRecommendation
 
 
 class IncidentGroup(BaseModel):
@@ -42,6 +44,8 @@ class IncidentRead(BaseModel):
     evidence: list[str]
     top_cause_service: str | None = None
     root_cause_data: RootCauseReport | None = None
+    runbook_data: RunbookRecommendation | None = None
+    approval_request: ApprovalRequestRead | None = None
 
     model_config = {"from_attributes": True}
 

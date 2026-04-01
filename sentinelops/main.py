@@ -1,12 +1,14 @@
 import logging
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from sqlalchemy import text
+from sqlalchemy import func, select, text
 
 from sentinelops.config import settings
-from sentinelops.database import engine
+from sentinelops.database import AsyncSessionLocal, engine
 from sentinelops import models  # noqa: F401
-from sentinelops.routers import ingest, incidents
+from sentinelops.models.runbook_chunk import RunbookChunk
+from sentinelops.routers import admin, approvals, ingest, incidents
+from sentinelops.services.vector_store import index_runbooks
 
 logging.basicConfig(level=settings.LOG_LEVEL)
 logger = logging.getLogger(__name__)
@@ -23,6 +25,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error("Database unreachable at startup: %s", e)
         raise
+
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(func.count()).select_from(RunbookChunk))
+        count = result.scalar()
+        if count == 0:
+            indexed = await index_runbooks(db)
+            logger.info("Auto-indexed %d runbook chunks on startup.", indexed)
+        else:
+            logger.info("Runbook index already populated (%d chunks).", count)
+
     yield
     logger.info("SentinelOps shutting down.")
 
@@ -36,6 +48,8 @@ app = FastAPI(
 
 app.include_router(ingest.router, prefix="/api/v1", tags=["ingest"])
 app.include_router(incidents.router, prefix="/api/v1", tags=["incidents"])
+app.include_router(approvals.router, prefix="/api/v1", tags=["approvals"])
+app.include_router(admin.router, tags=["admin"])
 
 
 @app.get("/health")
