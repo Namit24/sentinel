@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import Boolean, DateTime, Float, String, func
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -24,3 +25,6 @@ class Incident(Base):
     group_data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     confidence_score: Mapped[float] = mapped_column(Float, nullable=False)
     fallback_used: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    root_cause_data: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    top_cause_service: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(384), nullable=True)

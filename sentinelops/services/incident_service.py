@@ -12,6 +12,8 @@ from sentinelops.schemas.alert import AlertCreate
 from sentinelops.schemas.incident import GroupingOutput, IncidentListItem, IncidentRead
 from sentinelops.schemas.log_entry import RawLogEntryCreate
 from sentinelops.services.grouper import group_telemetry
+from sentinelops.services.root_cause_ranker import rank_root_causes
+from sentinelops.services.vector_store import embed_incident, incident_to_text
 
 logger = logging.getLogger(__name__)
 _MEMORY_INCIDENTS: dict[UUID, IncidentRead] = {}
@@ -21,6 +23,12 @@ def _to_incident_read(incident: Incident) -> IncidentRead:
     """Maps ORM incidents into API schema so handlers return a stable contract."""
 
     grouping = GroupingOutput.model_validate(incident.group_data)
+    root_cause_data = None
+    if incident.root_cause_data is not None:
+        from sentinelops.schemas.root_cause import RootCauseReport
+
+        root_cause_data = RootCauseReport.model_validate(incident.root_cause_data)
+
     return IncidentRead(
         id=incident.id,
         created_at=incident.created_at,
@@ -31,6 +39,8 @@ def _to_incident_read(incident: Incident) -> IncidentRead:
         confidence_score=incident.confidence_score,
         fallback_used=incident.fallback_used,
         evidence=grouping.evidence,
+        top_cause_service=incident.top_cause_service,
+        root_cause_data=root_cause_data,
     )
 
 
@@ -81,6 +91,17 @@ async def ingest_and_group(
             confidence_score=grouped.confidence_score,
             fallback_used=grouped.fallback_used,
         )
+        db.add(incident)
+        await db.flush()
+        incident.embedding = embed_incident(incident_to_text(incident))
+        report = await rank_root_causes(
+            incident_id=str(incident.id),
+            grouping_output=grouped,
+            db=db,
+        )
+        incident.root_cause_data = report.model_dump()
+        incident.top_cause_service = report.top_cause
+        incident.embedding = embed_incident(incident_to_text(incident))
         db.add(incident)
         await db.commit()
         await db.refresh(incident)
@@ -143,3 +164,14 @@ async def get_incident(db: AsyncSession, incident_id: UUID) -> IncidentRead | No
     except Exception:
         logger.exception("Database detail query failed; using memory fallback")
         return _MEMORY_INCIDENTS.get(incident_id)
+
+
+async def get_root_cause_report(db: AsyncSession, incident_id: UUID):
+    """Returns stored root-cause report when available so API handlers stay thin and deterministic."""
+
+    incident = await db.get(Incident, incident_id)
+    if incident is None or incident.root_cause_data is None:
+        return None
+    from sentinelops.schemas.root_cause import RootCauseReport
+
+    return RootCauseReport.model_validate(incident.root_cause_data)

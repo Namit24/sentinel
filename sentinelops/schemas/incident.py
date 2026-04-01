@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from sentinelops.schemas.alert import AlertCreate
 from sentinelops.schemas.log_entry import RawLogEntryCreate
+from sentinelops.schemas.root_cause import RootCauseReport
 
 
 class IncidentGroup(BaseModel):
@@ -39,6 +40,8 @@ class IncidentRead(BaseModel):
     confidence_score: float = Field(ge=0.0, le=1.0)
     fallback_used: bool
     evidence: list[str]
+    top_cause_service: str | None = None
+    root_cause_data: RootCauseReport | None = None
 
     model_config = {"from_attributes": True}
 

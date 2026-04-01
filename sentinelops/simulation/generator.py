@@ -99,10 +99,11 @@ def generate_alerts() -> list[AlertCreate]:
     selected = alert_templates[:count]
 
     alerts: list[AlertCreate] = []
+    run_token = uuid4().hex[:8].upper()
     for index, (service_name, severity, description) in enumerate(selected):
         alerts.append(
             AlertCreate(
-                alert_id=f"ALT-{1000 + index}",
+                alert_id=f"ALT-{run_token}-{1000 + index}",
                 service_name=service_name,
                 severity=severity,
                 description=description,
