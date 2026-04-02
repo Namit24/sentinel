@@ -8,3 +8,4 @@ dist/
 .ruff_cache/
 AGENT.md
 tests/
+eval/results/
