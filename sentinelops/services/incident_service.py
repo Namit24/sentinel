@@ -1,5 +1,6 @@
 import logging
 from datetime import UTC, datetime
+from time import perf_counter
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
@@ -12,12 +13,14 @@ from sentinelops.models.incident import Incident
 from sentinelops.models.log_entry import LogEntry
 from sentinelops.schemas.approval import ApprovalRequestRead
 from sentinelops.schemas.alert import AlertCreate
-from sentinelops.schemas.incident import GroupingOutput, IncidentListItem, IncidentRead
+from sentinelops.schemas.incident import GroupingOutput, IncidentListItem, IncidentRead, PipelineMetrics
 from sentinelops.schemas.log_entry import RawLogEntryCreate
+from sentinelops.schemas.policy import PolicyDecision
 from sentinelops.schemas.runbook import RunbookRecommendation
 from sentinelops.services.approval_service import create_approval_request
 from sentinelops.services.audit_service import get_audit_trail, log_event
 from sentinelops.services.grouper import group_telemetry
+from sentinelops.services.policy_engine import build_policy_decision
 from sentinelops.services.root_cause_ranker import rank_root_causes
 from sentinelops.services.runbook_retriever import get_runbook_recommendation
 from sentinelops.services.vector_store import embed_incident, incident_to_text
@@ -44,12 +47,18 @@ def _to_incident_read(incident: Incident, approval_request: ApprovalRequestRead 
     grouping = GroupingOutput.model_validate(incident.group_data)
     root_cause_data = None
     runbook_data = None
+    pipeline_metrics = None
+    policy_data = None
     if incident.root_cause_data is not None:
         from sentinelops.schemas.root_cause import RootCauseReport
 
         root_cause_data = RootCauseReport.model_validate(incident.root_cause_data)
     if incident.runbook_data is not None:
         runbook_data = RunbookRecommendation.model_validate(incident.runbook_data)
+    if incident.pipeline_metrics is not None:
+        pipeline_metrics = PipelineMetrics.model_validate(incident.pipeline_metrics)
+    if incident.policy_data is not None:
+        policy_data = PolicyDecision.model_validate(incident.policy_data)
 
     return IncidentRead(
         id=incident.id,
@@ -64,6 +73,8 @@ def _to_incident_read(incident: Incident, approval_request: ApprovalRequestRead 
         top_cause_service=incident.top_cause_service,
         root_cause_data=root_cause_data,
         runbook_data=runbook_data,
+        pipeline_metrics=pipeline_metrics,
+        policy_data=policy_data,
         approval_request=approval_request,
     )
 
@@ -73,7 +84,17 @@ async def ingest_and_group(
 ) -> IncidentRead:
     """Persists incoming telemetry, groups incidents, and stores the resulting grouped incident atomically."""
 
-    grouped = await group_telemetry(logs)
+    pipeline_started = perf_counter()
+    grouping_started = perf_counter()
+    grouped = await group_telemetry(logs, db=db)
+    grouping_ms = (perf_counter() - grouping_started) * 1000.0
+    report = None
+    runbook_recommendation = None
+    policy_decision = None
+    approval_read = None
+    root_cause_ms = 0.0
+    runbook_ms = 0.0
+    approval_ms = 0.0
     affected_services = sorted(
         {
             service
@@ -123,6 +144,7 @@ async def ingest_and_group(
             description="Incident record created from incoming telemetry bundle.",
             incident_id=incident.id,
             payload={"affected_services": affected_services, "raw_alert_ids": [alert.alert_id for alert in alerts]},
+            auto_commit=False,
         )
 
         await log_event(
@@ -134,6 +156,7 @@ async def ingest_and_group(
                 "confidence_score": grouped.confidence_score,
                 "fallback_used": grouped.fallback_used,
             },
+            auto_commit=False,
         )
 
         if grouped.fallback_used:
@@ -143,14 +166,17 @@ async def ingest_and_group(
                 description="Fallback grouping path used due to LLM unavailability or malformed output.",
                 incident_id=incident.id,
                 payload={"fallback_reason": grouped.fallback_reason},
+                auto_commit=False,
             )
 
         incident.embedding = embed_incident(incident_to_text(incident))
+        root_cause_started = perf_counter()
         report = await rank_root_causes(
             incident_id=str(incident.id),
             grouping_output=grouped,
             db=db,
         )
+        root_cause_ms = (perf_counter() - root_cause_started) * 1000.0
         incident.root_cause_data = report.model_dump()
         incident.top_cause_service = report.top_cause
 
@@ -163,10 +189,13 @@ async def ingest_and_group(
                 "top_cause": report.top_cause,
                 "confidence_score": report.confidence_score,
             },
+            auto_commit=False,
         )
 
         incident.embedding = embed_incident(incident_to_text(incident))
+        runbook_started = perf_counter()
         runbook_recommendation = await get_runbook_recommendation(report=report, db=db)
+        runbook_ms = (perf_counter() - runbook_started) * 1000.0
         incident.runbook_data = runbook_recommendation.model_dump()
         await log_event(
             db=db,
@@ -177,23 +206,49 @@ async def ingest_and_group(
                 "grounded": runbook_recommendation.grounded,
                 "source_files": runbook_recommendation.source_files,
             },
+            auto_commit=False,
         )
 
-        db.add(incident)
-        await db.commit()
-        await db.refresh(incident)
+        policy_decision = build_policy_decision(
+            grouping_output=grouped,
+            report=report,
+            runbook=runbook_recommendation,
+        )
+        incident.policy_data = policy_decision.model_dump()
 
+        approval_started = perf_counter()
         approval = await create_approval_request(
             incident_id=str(incident.id),
             report=report,
             runbook=runbook_recommendation,
             db=db,
+            policy_decision=policy_decision,
+            auto_commit=False,
         )
+        approval_ms = (perf_counter() - approval_started) * 1000.0
+        total_ms = (perf_counter() - pipeline_started) * 1000.0
+        incident.pipeline_metrics = PipelineMetrics(
+            grouping_ms=round(grouping_ms, 3),
+            root_cause_ms=round(root_cause_ms, 3),
+            runbook_ms=round(runbook_ms, 3),
+            approval_ms=round(approval_ms, 3),
+            total_ms=round(total_ms, 3),
+            log_count=len(logs),
+            alert_count=len(alerts),
+            fallback_used=grouped.fallback_used,
+            analysis_method=report.analysis_method,
+            runbook_grounded=runbook_recommendation.grounded,
+        ).model_dump()
+        db.add(incident)
+        await db.commit()
+        await db.refresh(incident)
+        await db.refresh(approval)
         approval_read = ApprovalRequestRead.model_validate(approval)
         return _to_incident_read(incident, approval_request=approval_read)
     except Exception:
         logger.exception("Database write failed; storing incident in memory fallback")
         await db.rollback()
+        total_ms = (perf_counter() - pipeline_started) * 1000.0
         memory_incident = IncidentRead(
             id=uuid4(),
             created_at=datetime.now(UTC),
@@ -204,6 +259,23 @@ async def ingest_and_group(
             confidence_score=grouped.confidence_score,
             fallback_used=grouped.fallback_used,
             evidence=grouped.evidence,
+            top_cause_service=report.top_cause if report is not None else None,
+            root_cause_data=report,
+            runbook_data=runbook_recommendation,
+            pipeline_metrics=PipelineMetrics(
+                grouping_ms=round(grouping_ms, 3),
+                root_cause_ms=round(root_cause_ms, 3),
+                runbook_ms=round(runbook_ms, 3),
+                approval_ms=round(approval_ms, 3),
+                total_ms=round(total_ms, 3),
+                log_count=len(logs),
+                alert_count=len(alerts),
+                fallback_used=grouped.fallback_used,
+                analysis_method=report.analysis_method if report is not None else "grouping_only",
+                runbook_grounded=bool(runbook_recommendation.grounded) if runbook_recommendation is not None else False,
+            ),
+            policy_data=policy_decision,
+            approval_request=approval_read,
         )
         _MEMORY_INCIDENTS[memory_incident.id] = memory_incident
         return memory_incident
@@ -220,6 +292,10 @@ async def list_incidents(db: AsyncSession) -> list[IncidentListItem]:
                 status=item.status,
                 affected_services=item.affected_services,
                 confidence_score=item.confidence_score,
+                top_cause_service=item.top_cause_service,
+                fallback_used=item.fallback_used,
+                risk_level=(item.policy_data or {}).get("risk_level") if item.policy_data else None,
+                policy_status=(item.policy_data or {}).get("policy_status") if item.policy_data else None,
                 created_at=item.created_at,
             )
             for item in result.all()
@@ -232,6 +308,10 @@ async def list_incidents(db: AsyncSession) -> list[IncidentListItem]:
                 status=item.status,
                 affected_services=item.affected_services,
                 confidence_score=item.confidence_score,
+                top_cause_service=item.top_cause_service,
+                fallback_used=item.fallback_used,
+                risk_level=item.policy_data.risk_level if item.policy_data else None,
+                policy_status=item.policy_data.policy_status if item.policy_data else None,
                 created_at=item.created_at,
             )
             for item in _MEMORY_INCIDENTS.values()

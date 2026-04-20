@@ -17,7 +17,7 @@ Synthetic Telemetry
 	  ▼
 ┌─────────────────────┐
 │  Module 1           │
-│  Signal Intelligence│  ← filter + deduplicate + LLM alert grouping
+│  Signal Intelligence│  ← filter + deduplicate + LLM telemetry grouping
 │  (Gemma 3 27B)      │    fallback: rule-based clustering
 └─────────┬───────────┘
 		  │ GroupingOutput
@@ -61,7 +61,7 @@ The key design principle is that every AI-dependent stage has a deterministic fa
 
 ## AI Component Justification
 
-**LLM alert grouping:** Alerts that describe the same incident often use different wording; semantic grouping catches relationships that strict keyword or regex rules miss. This is where language understanding provides direct operational value.
+**LLM telemetry grouping:** Related incident evidence often arrives across differently worded logs and service symptoms; semantic grouping catches relationships that strict keyword or regex rules miss. This is where language understanding provides direct operational value.
 
 **pgvector similarity search:** Prior incidents provide weak but useful prior probability for root-cause ranking, especially when current telemetry is noisy. Vector similarity enables that retrieval over incident history with low infrastructure overhead.
 
@@ -113,7 +113,7 @@ streamlit run dashboard/app.py
 uv run pytest tests/ -v
 
 # Run evaluation harness
-python eval/run_eval.py --runs 20 --delay-seconds 2
+uv run python eval/run_eval.py --runs-per-scenario 4 --delay-seconds 0.5
 ```
 
 ## API Endpoints
@@ -131,16 +131,18 @@ python eval/run_eval.py --runs 20 --delay-seconds 2
 | POST | /api/v1/approvals/{id}/reject | Reject with reason |
 | POST | /api/v1/approvals/{id}/escalate | Escalate to senior |
 | POST | /api/v1/admin/index-runbooks | Index runbook documents |
+| GET | /health | Readiness summary |
+| GET | /health/detailed | Detailed DB, breaker, and control diagnostics |
 
 ## What This Doesn't Do (Yet)
 
-This version evaluates one synthetic failure pattern (DB latency cascade), so cross-scenario generalization is not yet quantified. End-to-end latency is still dominated by sequential external LLM calls, and production deployment would require either faster dedicated inference or concurrency redesign to reduce response time variance. The dependency graph is currently static and code-defined rather than discovered from live topology or service mesh telemetry. Model behavior is prompt-driven only; there is no fine-tuning or policy optimization yet, so grouping quality still depends on external API reliability and quota constraints.
+The committed benchmark artifacts currently emphasize one dominant synthetic failure pattern (DB latency cascade), so broad cross-scenario generalization is not yet quantified from the checked-in results alone. End-to-end latency is still dominated by sequential external LLM calls, even though the system now enforces per-stage timeouts, circuit breakers, policy controls, and spike diagnostics. The dependency graph is currently static and code-defined rather than discovered from live topology or service mesh telemetry. Model behavior is prompt-driven only; there is no fine-tuning or policy optimization yet, so grouping quality still depends on external API reliability and quota constraints. The repository now includes a multi-scenario simulation catalog, detailed health endpoints, and a benchmark page in Streamlit so broader evaluation can be rerun and inspected locally.
 
 ## Project Structure
 
 ```
 sentinelops/
-├── AGENTS.md
+├── AGENT.md
 ├── README.md
 ├── pyproject.toml
 ├── .env.example
@@ -178,6 +180,13 @@ sentinelops/
 │   └── utils/
 │       ├── __init__.py
 │       └── fallbacks.py          # Rule-based fallbacks when LLM fails
+├── eval/
+│   ├── run_eval.py              # Multi-scenario benchmark harness
+│   ├── metrics.py               # Result aggregation helpers
+│   └── results/
+├── dashboard/
+│   ├── app.py                   # Streamlit operator dashboard
+│   └── pages/                   # scenario lab, incidents, audit, evaluation
 └── tests/
 	├── __init__.py
 	├── test_preprocessor.py

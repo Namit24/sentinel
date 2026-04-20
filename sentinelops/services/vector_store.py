@@ -24,6 +24,27 @@ except Exception:
     _model = None
 
 
+def _incident_group_summaries(group_data: dict | None) -> tuple[list[str], list[str]]:
+    """Extracts likely-cause phrases and error types from grouped telemetry for richer embeddings."""
+
+    if not isinstance(group_data, dict):
+        return [], []
+
+    likely_causes: list[str] = []
+    error_types: list[str] = []
+    for group in group_data.get("result") or []:
+        if isinstance(group, dict):
+            cause = group.get("likely_cause")
+            if isinstance(cause, str) and cause.strip():
+                likely_causes.append(cause.strip())
+            for event in group.get("supporting_events") or []:
+                if isinstance(event, dict):
+                    error_type = event.get("error_type")
+                    if isinstance(error_type, str) and error_type.strip():
+                        error_types.append(error_type.strip())
+    return likely_causes, sorted(set(error_types))
+
+
 def incident_to_text(incident) -> str:
     """
     Convert incident data to a plain text summary for embedding.
@@ -32,13 +53,30 @@ def incident_to_text(incident) -> str:
 
     services = ", ".join(incident.affected_services or [])
     cause = incident.top_cause_service or "unknown"
-    return f"Services affected: {services}. Top cause: {cause}."
+    group_data = getattr(incident, "group_data", None)
+    likely_causes, error_types = _incident_group_summaries(group_data if isinstance(group_data, dict) else None)
+    cause_text = "; ".join(likely_causes[:3]) if likely_causes else "none"
+    error_text = ", ".join(error_types[:6]) if error_types else "none"
+    return (
+        f"Services affected: {services}. "
+        f"Grouped causes: {cause_text}. "
+        f"Observed error types: {error_text}. "
+        f"Top cause: {cause}."
+    )
 
 
-def incident_text_from_parts(affected_services: list[str], top_cause_service: str | None) -> str:
+def incident_text_from_parts(
+    affected_services: list[str],
+    top_cause_service: str | None,
+    group_data: dict | None = None,
+) -> str:
     """Builds an embed-ready summary before root-cause ranking exists for the incident record."""
 
-    proxy = SimpleNamespace(affected_services=affected_services, top_cause_service=top_cause_service)
+    proxy = SimpleNamespace(
+        affected_services=affected_services,
+        top_cause_service=top_cause_service,
+        group_data=group_data,
+    )
     return incident_to_text(proxy)
 
 

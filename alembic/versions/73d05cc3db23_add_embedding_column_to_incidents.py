@@ -18,6 +18,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    op.execute("CREATE EXTENSION IF NOT EXISTS vector")
     op.add_column('incidents', sa.Column('embedding', Vector(dim=384), nullable=True))
 
 

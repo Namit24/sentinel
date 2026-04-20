@@ -1,0 +1,326 @@
+{
+  "total_runs": 10,
+  "successful_runs": 10,
+  "failed_runs": 0,
+  "overall_success_rate": 1.0,
+  "root_cause_top1_accuracy": 0.2,
+  "root_cause_top1_count": 2,
+  "root_cause_failures": [
+    {
+      "scenario_id": "auth_outage",
+      "run_index": 1,
+      "expected_top_cause": "auth-service",
+      "observed_top_cause": "db-primary"
+    },
+    {
+      "scenario_id": "auth_outage",
+      "run_index": 2,
+      "expected_top_cause": "auth-service",
+      "observed_top_cause": "db-primary"
+    },
+    {
+      "scenario_id": "cache_stampede",
+      "run_index": 3,
+      "expected_top_cause": "cache-service",
+      "observed_top_cause": "db-primary"
+    },
+    {
+      "scenario_id": "cache_stampede",
+      "run_index": 4,
+      "expected_top_cause": "cache-service",
+      "observed_top_cause": "db-primary"
+    },
+    {
+      "scenario_id": "gateway_503",
+      "run_index": 7,
+      "expected_top_cause": "api-gateway",
+      "observed_top_cause": "cache-service"
+    },
+    {
+      "scenario_id": "gateway_503",
+      "run_index": 8,
+      "expected_top_cause": "api-gateway",
+      "observed_top_cause": "cache-service"
+    },
+    {
+      "scenario_id": "payment_timeout",
+      "run_index": 9,
+      "expected_top_cause": "payment-service",
+      "observed_top_cause": "db-primary"
+    },
+    {
+      "scenario_id": "payment_timeout",
+      "run_index": 10,
+      "expected_top_cause": "payment-service",
+      "observed_top_cause": "db-primary"
+    }
+  ],
+  "grouping_fallback_rate": 0.1,
+  "grouping_fallback_count": 1,
+  "grouping_llm_success_rate": 0.9,
+  "mean_grouping_confidence": 0.8115,
+  "grouping_confidence_distribution": [
+    0.88,
+    0.815,
+    0.88,
+    0.88,
+    0.95,
+    0.95,
+    0.7,
+    0.3,
+    0.88,
+    0.88
+  ],
+  "runbook_grounding_rate": 1.0,
+  "runbook_correct_source_rate": 1.0,
+  "mean_runbook_confidence": 0.6610742870211087,
+  "runbook_confidence_distribution": [
+    0.6688338809177861,
+    0.6688338809177861,
+    0.660660576087977,
+    0.660660576087977,
+    0.660660576087977,
+    0.660660576087977,
+    0.6281738385907938,
+    0.6281738385907938,
+    0.6870425634210097,
+    0.6870425634210097
+  ],
+  "mean_root_cause_confidence": 0.6842748000000001,
+  "root_cause_confidence_distribution": [
+    0.608437,
+    0.608437,
+    0.79,
+    0.79,
+    0.832,
+    0.832,
+    0.525,
+    0.64,
+    0.608437,
+    0.608437
+  ],
+  "graph_only_rate": 0.0,
+  "mean_latency_seconds": 11.1524,
+  "p50_latency_seconds": 10.0336,
+  "p95_latency_seconds": 17.491365,
+  "max_latency_seconds": 18.3546,
+  "latency_distribution": [
+    18.3546,
+    16.4363,
+    9.9141,
+    8.8188,
+    10.1531,
+    8.6284,
+    10.4857,
+    11.9694,
+    8.048,
+    8.7156
+  ],
+  "latency_spike_threshold_seconds": 15.8840875,
+  "latency_spike_count": 2,
+  "latency_spike_runs": [
+    {
+      "run_index": 1,
+      "scenario_id": "auth_outage",
+      "scenario_title": "Auth Service Outage",
+      "latency_seconds": 18.3546,
+      "pipeline_total_ms": 17410.718,
+      "dominant_stage": "runbook",
+      "grouping_ms": 3562.491,
+      "root_cause_ms": 457.991,
+      "runbook_ms": 8421.627,
+      "approval_ms": 659.622,
+      "fallback_used": false,
+      "analysis_method": "graph+vector",
+      "policy_status": "RESTRICTED_REVIEW"
+    },
+    {
+      "run_index": 2,
+      "scenario_id": "auth_outage",
+      "scenario_title": "Auth Service Outage",
+      "latency_seconds": 16.4363,
+      "pipeline_total_ms": 15782.736,
+      "dominant_stage": "runbook",
+      "grouping_ms": 5043.345,
+      "root_cause_ms": 230.778,
+      "runbook_ms": 8309.201,
+      "approval_ms": 362.158,
+      "fallback_used": false,
+      "analysis_method": "graph+vector",
+      "policy_status": "RESTRICTED_REVIEW"
+    }
+  ],
+  "slowest_runs": [
+    {
+      "run_index": 1,
+      "scenario_id": "auth_outage",
+      "scenario_title": "Auth Service Outage",
+      "latency_seconds": 18.3546,
+      "pipeline_total_ms": 17410.718,
+      "dominant_stage": "runbook",
+      "top_cause_service": "db-primary",
+      "policy_status": "RESTRICTED_REVIEW"
+    },
+    {
+      "run_index": 2,
+      "scenario_id": "auth_outage",
+      "scenario_title": "Auth Service Outage",
+      "latency_seconds": 16.4363,
+      "pipeline_total_ms": 15782.736,
+      "dominant_stage": "runbook",
+      "top_cause_service": "db-primary",
+      "policy_status": "RESTRICTED_REVIEW"
+    },
+    {
+      "run_index": 8,
+      "scenario_id": "gateway_503",
+      "scenario_title": "Gateway 503 Spike",
+      "latency_seconds": 11.9694,
+      "pipeline_total_ms": 11385.436,
+      "dominant_stage": "grouping",
+      "top_cause_service": "cache-service",
+      "policy_status": "ESCALATE_REQUIRED"
+    },
+    {
+      "run_index": 7,
+      "scenario_id": "gateway_503",
+      "scenario_title": "Gateway 503 Spike",
+      "latency_seconds": 10.4857,
+      "pipeline_total_ms": 9899.684,
+      "dominant_stage": "grouping",
+      "top_cause_service": "cache-service",
+      "policy_status": "ESCALATE_REQUIRED"
+    },
+    {
+      "run_index": 5,
+      "scenario_id": "db_latency",
+      "scenario_title": "DB Latency Cascade",
+      "latency_seconds": 10.1531,
+      "pipeline_total_ms": 9568.638,
+      "dominant_stage": "grouping",
+      "top_cause_service": "db-primary",
+      "policy_status": "RESTRICTED_REVIEW"
+    }
+  ],
+  "mean_pipeline_total_ms": 10525.1545,
+  "p95_pipeline_total_ms": 16678.126099999998,
+  "pipeline_stage_means_ms": {
+    "grouping": 5719.8265,
+    "root_cause": 251.95819999999998,
+    "runbook": 1990.9977999999999,
+    "approval": 465.0108
+  },
+  "pipeline_stage_p95_ms": {
+    "grouping": 7431.939299999998,
+    "root_cause": 355.74514999999974,
+    "runbook": 8371.0353,
+    "approval": 724.3159999999999
+  },
+  "top_cause_distribution": [
+    "db-primary",
+    "db-primary",
+    "db-primary",
+    "db-primary",
+    "db-primary",
+    "db-primary",
+    "cache-service",
+    "cache-service",
+    "db-primary",
+    "db-primary"
+  ],
+  "top_cause_counts": {
+    "db-primary": 8,
+    "cache-service": 2
+  },
+  "source_file_frequency": {
+    "api_gateway_503.md": 10,
+    "db_latency.md": 10,
+    "payment_timeout.md": 10,
+    "auth_outage.md": 2,
+    "cache_stampede.md": 2
+  },
+  "policy_status_counts": {
+    "RESTRICTED_REVIEW": 8,
+    "ESCALATE_REQUIRED": 2
+  },
+  "risk_level_counts": {
+    "MEDIUM": 8,
+    "HIGH": 2
+  },
+  "reviewer_tier_counts": {
+    "operator": 8,
+    "senior-operator": 2
+  },
+  "scenario_breakdown": [
+    {
+      "scenario_id": "auth_outage",
+      "scenario_title": "Auth Service Outage",
+      "expected_top_cause": "auth-service",
+      "runs": 2,
+      "successful_runs": 2,
+      "fallback_rate": 0.0,
+      "top1_accuracy": 0.0,
+      "runbook_source_hit_rate": 1.0,
+      "mean_latency_seconds": 17.39545,
+      "top_causes": {
+        "db-primary": 2
+      }
+    },
+    {
+      "scenario_id": "cache_stampede",
+      "scenario_title": "Cache Stampede",
+      "expected_top_cause": "cache-service",
+      "runs": 2,
+      "successful_runs": 2,
+      "fallback_rate": 0.0,
+      "top1_accuracy": 0.0,
+      "runbook_source_hit_rate": 1.0,
+      "mean_latency_seconds": 9.36645,
+      "top_causes": {
+        "db-primary": 2
+      }
+    },
+    {
+      "scenario_id": "db_latency",
+      "scenario_title": "DB Latency Cascade",
+      "expected_top_cause": "db-primary",
+      "runs": 2,
+      "successful_runs": 2,
+      "fallback_rate": 0.0,
+      "top1_accuracy": 1.0,
+      "runbook_source_hit_rate": 1.0,
+      "mean_latency_seconds": 9.39075,
+      "top_causes": {
+        "db-primary": 2
+      }
+    },
+    {
+      "scenario_id": "gateway_503",
+      "scenario_title": "Gateway 503 Spike",
+      "expected_top_cause": "api-gateway",
+      "runs": 2,
+      "successful_runs": 2,
+      "fallback_rate": 0.5,
+      "top1_accuracy": 0.0,
+      "runbook_source_hit_rate": 1.0,
+      "mean_latency_seconds": 11.22755,
+      "top_causes": {
+        "cache-service": 2
+      }
+    },
+    {
+      "scenario_id": "payment_timeout",
+      "scenario_title": "Payment Timeout Storm",
+      "expected_top_cause": "payment-service",
+      "runs": 2,
+      "successful_runs": 2,
+      "fallback_rate": 0.0,
+      "top1_accuracy": 0.0,
+      "runbook_source_hit_rate": 1.0,
+      "mean_latency_seconds": 8.3818,
+      "top_causes": {
+        "db-primary": 2
+      }
+    }
+  ]
+}

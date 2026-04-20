@@ -84,4 +84,5 @@ if selected:
     col1, col2, col3 = st.columns(3)
     col1.metric("Total events", total_events)
     col2.metric("Fallbacks used", fallback_count)
-    col3.metric("Resolution time", duration)
+    col3.metric("Observed timeline", duration)
+    st.caption("Observed timeline measures the first-to-last recorded audit event, not incident closure SLA.")

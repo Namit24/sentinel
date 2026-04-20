@@ -2,12 +2,20 @@ import asyncio
 import json
 import logging
 import re
+from time import perf_counter
+
 from google import genai
 from google.genai import types
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from sentinelops.config import settings
+from sentinelops.models.prompt_run import PromptRun
 from sentinelops.schemas.incident import GroupingOutput
+from sentinelops.services.llm_guard import LLMCircuitOpen, get_breaker
 
 logger = logging.getLogger(__name__)
+PROMPT_VERSION = "v2"
+GROUPING_MODEL_NAME = "gemma-4-31b-it"
 
 GROUPING_SYSTEM_PROMPT = """You are an enterprise incident triage system.
 Your only job is to group related error events into incident clusters.
@@ -141,19 +149,42 @@ class GeminiClient:
     def _generate(self, prompt: str) -> str:
         """Calls Gemini synchronously so async wrappers can centralize retry and parse behavior."""
 
-        try:
+        def _call_json_mode() -> str:
             response = self.client.models.generate_content(
-                model="gemma-3-27b-it",
+                model=GROUPING_MODEL_NAME,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.0,
+                    max_output_tokens=2048,
+                ),
+            )
+            return response.text or ""
+
+        def _call_plain_mode() -> str:
+            response = self.client.models.generate_content(
+                model=GROUPING_MODEL_NAME,
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     temperature=0.0,
                     max_output_tokens=2048,
                 ),
             )
-        except Exception as exc:
-            raise LLMFallbackRequired(str(exc)) from exc
+            return response.text or ""
 
-        return response.text or ""
+        try:
+            return _call_json_mode()
+        except Exception as exc:
+            message = str(exc)
+            if "JSON mode is not enabled" in message:
+                logger.warning(
+                    "Gemini JSON mode unavailable for grouping model; retrying without response_mime_type"
+                )
+                try:
+                    return _call_plain_mode()
+                except Exception as retry_exc:
+                    raise LLMFallbackRequired(str(retry_exc)) from retry_exc
+            raise LLMFallbackRequired(message) from exc
 
     def _parse_grouping_output(self, payload: str) -> GroupingOutput:
         """Validates model JSON against strict schema so API consumers never receive raw model text."""
@@ -183,16 +214,89 @@ class GeminiClient:
         }
         return GroupingOutput.model_validate(normalized)
 
-    async def group_incidents(self, structured_events: list[dict]) -> GroupingOutput:
+    async def _log_prompt_run(
+        self,
+        *,
+        db: AsyncSession,
+        input_token_estimate: int,
+        output_token_estimate: int,
+        latency_ms: float,
+        confidence_score: float,
+        fallback_used: bool,
+        fallback_reason: str | None,
+        success: bool,
+    ) -> None:
+        """Persists one prompt run using a nested transaction so logging failures never break grouping."""
+
+        try:
+            async with db.begin_nested():
+                db.add(
+                    PromptRun(
+                        incident_id=None,
+                        prompt_version=PROMPT_VERSION,
+                        model_name=GROUPING_MODEL_NAME,
+                        input_token_estimate=input_token_estimate,
+                        output_token_estimate=output_token_estimate,
+                        latency_ms=latency_ms,
+                        confidence_score=confidence_score,
+                        fallback_used=fallback_used,
+                        fallback_reason=fallback_reason,
+                        success=success,
+                    )
+                )
+        except Exception:
+            logger.warning("Failed to record prompt run telemetry", exc_info=True)
+
+    async def group_incidents(self, structured_events: list[dict], db: AsyncSession) -> GroupingOutput:
         """Groups structured events with one retry-on-malformed policy before requiring fallback mode."""
 
         prompt = self._build_user_prompt(structured_events)
+        input_token_estimate = len(prompt) // 4
+        started = perf_counter()
+        breaker = get_breaker("grouping")
 
         try:
+            breaker.ensure_available()
             first = await asyncio.wait_for(
-                asyncio.to_thread(self._generate, prompt), timeout=30.0
+                asyncio.to_thread(self._generate, prompt),
+                timeout=settings.GROUPING_TIMEOUT_SECONDS,
             )
-            return self._parse_grouping_output(first)
+            output = self._parse_grouping_output(first)
+            await self._log_prompt_run(
+                db=db,
+                input_token_estimate=input_token_estimate,
+                output_token_estimate=len(first) // 4,
+                latency_ms=(perf_counter() - started) * 1000.0,
+                confidence_score=output.confidence_score,
+                fallback_used=False,
+                fallback_reason=None,
+                success=True,
+            )
+            breaker.record_success()
+            return output
+        except LLMCircuitOpen as exc:
+            await self._log_prompt_run(
+                db=db,
+                input_token_estimate=input_token_estimate,
+                output_token_estimate=0,
+                latency_ms=(perf_counter() - started) * 1000.0,
+                confidence_score=0.0,
+                fallback_used=True,
+                fallback_reason=str(exc),
+                success=False,
+            )
+            raise LLMFallbackRequired(str(exc)) from exc
         except Exception as exc:
+            await self._log_prompt_run(
+                db=db,
+                input_token_estimate=input_token_estimate,
+                output_token_estimate=0,
+                latency_ms=(perf_counter() - started) * 1000.0,
+                confidence_score=0.0,
+                fallback_used=True,
+                fallback_reason=str(exc),
+                success=False,
+            )
+            breaker.record_failure(str(exc))
             logger.exception("Gemini grouping call or parsing failed")
             raise LLMFallbackRequired(str(exc)) from exc

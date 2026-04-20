@@ -6,7 +6,3 @@ __pycache__/
 *.egg-info/
 dist/
 .ruff_cache/
-AGENT.md
-tests/
-eval/results/
-eval/

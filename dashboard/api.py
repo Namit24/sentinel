@@ -35,6 +35,12 @@ def check_health() -> dict:
     return _request("GET", "/health")
 
 
+def check_health_detailed() -> dict:
+    """Fetches detailed FastAPI readiness so the dashboard can render breaker and runbook diagnostics."""
+
+    return _request("GET", "/health/detailed")
+
+
 def run_ingest(logs: list, alerts: list) -> dict:
     """Triggers ingestion for one telemetry bundle and returns the enriched incident payload."""
 
@@ -77,6 +83,17 @@ def get_pending_approvals() -> list:
     return _request("GET", "/api/v1/approvals/pending")
 
 
+def index_runbooks() -> dict:
+    """Indexes runbooks, preferring the versioned admin route while retaining compatibility with legacy path."""
+
+    try:
+        return _request("POST", "/api/v1/admin/index-runbooks")
+    except RuntimeError as exc:
+        if "404" not in str(exc):
+            raise
+        return _request("POST", "/admin/index-runbooks")
+
+
 def get_approval(approval_id: str) -> dict:
     """Returns one approval request record for direct status inspection and troubleshooting."""
 
@@ -111,3 +128,21 @@ def escalate(approval_id: str, reviewed_by: str, reason: str) -> dict:
         f"/api/v1/approvals/{approval_id}/escalate",
         {"reviewed_by": reviewed_by, "reason": reason},
     )
+
+
+def get_prompt_health() -> dict:
+    """Returns prompt run health aggregates for the MLOps dashboard page."""
+
+    return _request("GET", "/api/v1/metrics/prompt-health")
+
+
+def get_confidence_trend() -> list:
+    """Returns prompt confidence time-series points for MLOps trend visualization."""
+
+    return _request("GET", "/api/v1/metrics/confidence-trend")
+
+
+def get_drift_stats() -> dict:
+    """Returns telemetry distribution drift statistics for MLOps monitoring."""
+
+    return _request("GET", "/api/v1/metrics/drift")

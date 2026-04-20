@@ -1,4 +1,5 @@
 import logging
+import re
 from collections import Counter, defaultdict
 from datetime import datetime
 
@@ -7,6 +8,9 @@ from sentinelops.schemas.log_entry import RawLogEntryCreate
 logger = logging.getLogger(__name__)
 
 _SEVERITY_RANK = {"CRITICAL": 4, "ERROR": 3, "WARN": 2, "WARNING": 2, "INFO": 1, "DEBUG": 0}
+_EMAIL_PATTERN = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
+_PAN_PATTERN = re.compile(r"\b(?:\d[ -]*?){13,19}\b")
+_JWT_PATTERN = re.compile(r"\beyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+\b")
 
 
 def _normalize_level(level: str) -> str:
@@ -28,6 +32,15 @@ def _infer_error_type(message: str) -> str:
     if "crash" in lowered or "panic" in lowered or "segfault" in lowered:
         return "crash"
     return "unknown"
+
+
+def _sanitize_message(message: str) -> str:
+    """Redacts sensitive strings before telemetry is passed to LLM-facing payloads."""
+
+    sanitized = _EMAIL_PATTERN.sub("[REDACTED_EMAIL]", message)
+    sanitized = _JWT_PATTERN.sub("[REDACTED_TOKEN]", sanitized)
+    sanitized = _PAN_PATTERN.sub("[REDACTED_PAN]", sanitized)
+    return sanitized
 
 
 def filter_logs(logs: list[RawLogEntryCreate]) -> list[RawLogEntryCreate]:
@@ -80,7 +93,7 @@ def deduplicate_logs(logs: list[RawLogEntryCreate]) -> list[dict]:
                 "timestamp": log.timestamp,
                 "service": log.service_name,
                 "log_level": _normalize_level(log.log_level),
-                "message": log.message,
+                "message": _sanitize_message(log.message),
                 "count": 1,
                 "trace_id": log.trace_id,
             }

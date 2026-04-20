@@ -17,6 +17,7 @@ async def log_event(
     approval_request_id: str | UUID | None = None,
     actor: str = "system",
     payload: dict | None = None,
+    auto_commit: bool = True,
 ) -> AuditLog | None:
     """Writes a best-effort audit event and never lets audit persistence failures break caller flows."""
 
@@ -36,16 +37,21 @@ async def log_event(
             description=description,
             payload=payload,
         )
-        db.add(event)
-        await db.commit()
-        await db.refresh(event)
+        # Use a savepoint so audit failures do not poison the caller's broader transaction.
+        async with db.begin_nested():
+            db.add(event)
+            await db.flush()
+        if auto_commit:
+            await db.commit()
+            await db.refresh(event)
         return event
     except Exception:
         logger.exception("Failed to persist audit event: %s", event_type)
-        try:
-            await db.rollback()
-        except Exception:
-            logger.exception("Failed to rollback after audit log write failure")
+        if auto_commit:
+            try:
+                await db.rollback()
+            except Exception:
+                logger.exception("Failed to rollback after audit log write failure")
         return None
 
 

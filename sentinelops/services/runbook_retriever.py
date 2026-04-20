@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from google import genai
@@ -6,6 +7,7 @@ from google.genai import types
 from sentinelops.config import settings
 from sentinelops.schemas.root_cause import RootCauseReport
 from sentinelops.schemas.runbook import RunbookRecommendation
+from sentinelops.services.llm_guard import LLMCircuitOpen, get_breaker
 from sentinelops.services.vector_store import retrieve_runbook_chunks
 
 logger = logging.getLogger(__name__)
@@ -52,8 +54,9 @@ async def synthesize_recommendation(report: RootCauseReport, chunks: list[dict])
         "Based only on the excerpts above, provide step-by-step remediation."
     )
 
-    response = client.models.generate_content(
-        model="gemma-3-27b-it",
+    response = await asyncio.to_thread(
+        client.models.generate_content,
+        model="gemma-4-31b-it",
         contents=user_prompt,
         config=types.GenerateContentConfig(
             temperature=0.0,
@@ -102,8 +105,22 @@ async def get_runbook_recommendation(report: RootCauseReport, db) -> RunbookReco
         )
 
     try:
-        raw = await synthesize_recommendation(report=report, chunks=chunks)
+        breaker = get_breaker("runbook_synthesis")
+        breaker.ensure_available()
+        raw = await asyncio.wait_for(
+            synthesize_recommendation(report=report, chunks=chunks),
+            timeout=settings.RUNBOOK_SYNTHESIS_TIMEOUT_SECONDS,
+        )
+        breaker.record_success()
+    except LLMCircuitOpen:
+        logger.warning("Runbook synthesis breaker open; using excerpt-grounded fallback")
+        fallback_lines = [
+            f"{idx}. Review section '{chunk['section_title']}' in {chunk['source_file']} [source: {chunk['chunk_id']}]"
+            for idx, chunk in enumerate(chunks, start=1)
+        ]
+        raw = "\n".join(fallback_lines)
     except Exception:
+        get_breaker("runbook_synthesis").record_failure("synthesis_failed")
         logger.exception("Runbook synthesis failed; returning excerpt-grounded fallback recommendation")
         fallback_lines = [
             f"{idx}. Review section '{chunk['section_title']}' in {chunk['source_file']} [source: {chunk['chunk_id']}]"

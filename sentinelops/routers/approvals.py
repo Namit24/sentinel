@@ -74,7 +74,7 @@ async def escalate_approval_request(
     """Escalates a pending request when reviewer needs broader incident-command involvement."""
 
     try:
-        approval = await escalate_request(str(approval_id), action.reason or "", db)
+        approval = await escalate_request(str(approval_id), action.reviewed_by, action.reason or "", db)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return ApprovalRequestRead.model_validate(approval)

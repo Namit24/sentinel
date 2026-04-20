@@ -10,7 +10,15 @@ from sentinelops.config import settings
 from sentinelops.database import Base
 
 # Import all models so Alembic can detect them
-from sentinelops.models import alert, approval_request, audit_log, incident, log_entry, runbook_chunk  # noqa: F401
+from sentinelops.models import (  # noqa: F401
+    alert,
+    approval_request,
+    audit_log,
+    incident,
+    log_entry,
+    prompt_run,
+    runbook_chunk,
+)
 
 config = context.config
 

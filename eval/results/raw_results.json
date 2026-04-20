@@ -1,0 +1,382 @@
+[
+  {
+    "run_index": 1,
+    "success": true,
+    "error": null,
+    "incident_id": "b04f1846-bbba-4978-8c2a-94eb9c963977",
+    "fallback_used": false,
+    "grouping_confidence": 0.88,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 18.9804
+  },
+  {
+    "run_index": 2,
+    "success": true,
+    "error": null,
+    "incident_id": "5b29c92c-e42c-4b01-93ee-6ef9cba6ae56",
+    "fallback_used": false,
+    "grouping_confidence": 0.95,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 16.4721
+  },
+  {
+    "run_index": 3,
+    "success": true,
+    "error": null,
+    "incident_id": "486c1f39-26c5-460e-a413-09c6f9fbcbb7",
+    "fallback_used": false,
+    "grouping_confidence": 0.95,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 15.1667
+  },
+  {
+    "run_index": 4,
+    "success": true,
+    "error": null,
+    "incident_id": "e308f1af-d765-417f-b4a0-33883eb3c65f",
+    "fallback_used": false,
+    "grouping_confidence": 0.88,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 16.0097
+  },
+  {
+    "run_index": 5,
+    "success": true,
+    "error": null,
+    "incident_id": "f7735427-50f1-4687-8234-26a7656075f1",
+    "fallback_used": false,
+    "grouping_confidence": 0.88,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 16.6371
+  },
+  {
+    "run_index": 6,
+    "success": true,
+    "error": null,
+    "incident_id": "b44c49d0-32ea-4fdf-912f-7e9910f79264",
+    "fallback_used": false,
+    "grouping_confidence": 0.88,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 17.012
+  },
+  {
+    "run_index": 7,
+    "success": true,
+    "error": null,
+    "incident_id": "1d51daaa-be26-49fa-b319-8cf436c0644b",
+    "fallback_used": false,
+    "grouping_confidence": 0.95,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 16.5091
+  },
+  {
+    "run_index": 8,
+    "success": true,
+    "error": null,
+    "incident_id": "327580a4-a139-4860-a475-f346bcd96455",
+    "fallback_used": false,
+    "grouping_confidence": 0.95,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 16.3626
+  },
+  {
+    "run_index": 9,
+    "success": true,
+    "error": null,
+    "incident_id": "8fb3bf05-fbd2-41fa-a232-e72c55aa14e8",
+    "fallback_used": false,
+    "grouping_confidence": 0.88,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 15.6578
+  },
+  {
+    "run_index": 10,
+    "success": true,
+    "error": null,
+    "incident_id": "8ffbaf45-d2e7-486f-8953-0c77844768ed",
+    "fallback_used": false,
+    "grouping_confidence": 0.88,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 17.0406
+  },
+  {
+    "run_index": 11,
+    "success": true,
+    "error": null,
+    "incident_id": "ed63190e-b520-4cf1-89a1-8b26354f8936",
+    "fallback_used": false,
+    "grouping_confidence": 0.88,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 16.1093
+  },
+  {
+    "run_index": 12,
+    "success": true,
+    "error": null,
+    "incident_id": "5e775474-81d3-4160-8485-ba1c378a7e1c",
+    "fallback_used": false,
+    "grouping_confidence": 0.88,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 15.2194
+  },
+  {
+    "run_index": 13,
+    "success": true,
+    "error": null,
+    "incident_id": "3dcf9e58-573b-4ddf-b852-be8502a17491",
+    "fallback_used": false,
+    "grouping_confidence": 0.95,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 16.6361
+  },
+  {
+    "run_index": 14,
+    "success": true,
+    "error": null,
+    "incident_id": "02d66824-190b-481d-ba32-eb0c8c91873b",
+    "fallback_used": false,
+    "grouping_confidence": 0.95,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 15.6768
+  },
+  {
+    "run_index": 15,
+    "success": true,
+    "error": null,
+    "incident_id": "d2d5c7d8-121a-4e4a-802b-49321d6b24c8",
+    "fallback_used": false,
+    "grouping_confidence": 0.95,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 15.9093
+  },
+  {
+    "run_index": 16,
+    "success": true,
+    "error": null,
+    "incident_id": "e7984435-4269-48b1-99c6-3da6f978b764",
+    "fallback_used": true,
+    "grouping_confidence": 0.3,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 28.209
+  },
+  {
+    "run_index": 17,
+    "success": true,
+    "error": null,
+    "incident_id": "e48eb6a8-29ba-4a59-84ee-895baa3097dc",
+    "fallback_used": false,
+    "grouping_confidence": 0.95,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 16.4172
+  },
+  {
+    "run_index": 18,
+    "success": true,
+    "error": null,
+    "incident_id": "ad7b241a-9a5e-4c17-abb2-de3512aa4027",
+    "fallback_used": false,
+    "grouping_confidence": 0.95,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 18.0631
+  },
+  {
+    "run_index": 19,
+    "success": true,
+    "error": null,
+    "incident_id": "2e5da785-1cdc-4e87-90c9-3396ee75eb4f",
+    "fallback_used": false,
+    "grouping_confidence": 0.95,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 15.3986
+  },
+  {
+    "run_index": 20,
+    "success": true,
+    "error": null,
+    "incident_id": "a3d95e25-26c8-4bb2-88dc-9feee61dcb7d",
+    "fallback_used": false,
+    "grouping_confidence": 0.88,
+    "top_cause_service": "db-primary",
+    "root_cause_confidence": 1.0,
+    "analysis_method": "graph+vector",
+    "runbook_source_files": [
+      "api_gateway_503.md",
+      "db_latency.md",
+      "payment_timeout.md"
+    ],
+    "runbook_grounded": true,
+    "runbook_confidence": 0.660660576087977,
+    "latency_seconds": 17.2637
+  }
+]
