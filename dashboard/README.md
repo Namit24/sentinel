@@ -19,3 +19,16 @@ If FastAPI is running on a different host/port:
 ```bash
 export SENTINELOPS_API_URL=http://localhost:8000
 ```
+
+## Run with Docker Compose
+
+From repo root:
+
+```bash
+cp .env.example .env
+docker compose build
+docker compose --profile tools run --rm migrate
+docker compose up
+```
+
+Dashboard URL: `http://localhost:8501`

@@ -1,0 +1,14 @@
+.git
+.github
+.pytest_cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.venv
+.env
+alembic/__pycache__
+dashboard/__pycache__
+sentinelops/__pycache__
+tests/__pycache__
+eval/results

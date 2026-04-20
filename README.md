@@ -116,6 +116,44 @@ uv run pytest tests/ -v
 uv run python eval/run_eval.py --runs-per-scenario 4 --delay-seconds 0.5
 ```
 
+## Running with Docker
+
+```bash
+# From repo root
+cd sentinelops
+
+# Create env file once and fill in GEMINI_API_KEY + DATABASE_URL
+cp .env.example .env
+
+# Build images
+docker compose build
+
+# Run migrations (one-off)
+docker compose --profile tools run --rm migrate
+
+# Start backend + dashboard
+docker compose up
+```
+
+Endpoints:
+
+- Backend API: `http://localhost:8000`
+- Dashboard: `http://localhost:8501`
+
+Useful commands:
+
+```bash
+# Stop services
+docker compose down
+
+# Re-run migrations later
+docker compose --profile tools run --rm migrate
+
+# Tail logs
+docker compose logs -f backend
+docker compose logs -f dashboard
+```
+
 ## API Endpoints
 
 | Method | Endpoint | Description |
